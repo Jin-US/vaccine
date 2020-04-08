@@ -1,0 +1,138 @@
+# -*- coding:utf-8 -*-    # 한글 설정
+import hashlib    # MD5를 구하기 위해 import
+import shutil
+import os
+import getpass
+import sys
+sys.setrecursionlimit(3000000)#재귀 리미트 제한 해제
+
+filePath = []
+full_fname = []
+u_name = getpass.getuser()
+p_path = "C:\\Users\\"+u_name
+fp = []
+hashValue = []
+hash =[]
+temp_rute=[]
+num2=0
+num3=0
+l_hash = []
+res_n = []
+
+
+def main():
+    print("1=탐지 기능 실행\n2=삭제 기능 실행\n3=악성코드 추가\n4=종료")
+    num = int(input())
+    if num == 1:
+        print("탐지 기능을 실행합니다.")
+        route()
+    elif num == 2:
+        print("삭제 기능을 실행합니다.")
+        # delete()
+    elif num == 3:
+        exit
+    else:
+        print("없는 기능입니다.")
+        main()
+
+
+def route():                        #경로 선택 함수
+    global filePath
+    print(" 1:C드라이브 탐색\n 2:D드라이브 탐색\n 3:다운로드파일 탐색\n 4:기타 입력")
+    select = int(input())
+    if select == 1:
+        print("C드라이브를 탐색합니다.")
+        filePath = 'C:\\'
+        readDir(filePath)
+        return filePath
+
+    elif select == 2:
+         print("D드라이브를 탐색합니다.")
+         filePath = 'D:\\'
+         readDir(filePath)
+         return filePath
+
+    elif select == 3:
+         print("다운로드파일을 탐색합니다.")
+         filePath = p_path + '\\Downloads'
+         readDir(filePath)
+         return filePath
+    
+    elif select == 4:
+         print("입력 경로 파일을 탐색합니다. 경로를 입력하세요.")
+         filePath = input()
+         print("입력 경로는",filePath,"입니다.")
+         readDir(filePath)
+         return filePath
+    
+    else:
+         print("잘못 선택하셧습니다. 다시입력.")
+         route()
+
+def readDir(filePath):      #파일 이름 찾기 함수
+    global res_n ,fp, fbuf, hashValue, k, temp_rute, num2, num3, l_hash
+
+    fDB = open(p_path+'\\Desktop\\test\\DB.txt') #DB읽어오는 부분
+    lines = fDB.readlines()
+    for k in range(len(lines)):
+        l_hash = lines[k]
+        lines[k] = str(l_hash.strip())
+    print(str(lines)) #DB읽어온것 확인
+    for root, dirs, files in os.walk(filePath):
+        rootpath = os.path.join(os.path.abspath(filePath),root)
+
+        for file in files:
+            filePath = os.path.join(rootpath,file)
+            try : 
+                fp = open(filePath,'rb')    # 반드시 바이너리 모드로 읽어들여 파일객체 생성
+            except PermissionError :
+                continue
+            except MemoryError :
+                continue
+            try :    
+                fbuf = fp.read()    # 파일객체로부터 내용 읽어들여 버퍼에 저장
+            except MemoryError :
+                continue
+            fp.close()
+            f = hashlib.md5()    # MD5 hash function
+            f.update(fbuf)    # hashing!
+            hashValue = f.hexdigest()    # 메시지 다이제스트를 얻음(16진수 해시값)
+            print("\n"+filePath+" -> 검사중")
+            if hashValue in str(lines):    # EICAR test 파일의 MD5 해시값
+               temp_rute.append(filePath)     #탐지된 악성코드 경로 저장
+               num2+=1
+    for txt in temp_rute:   #탐지된 악성코드 격리파일로 이동
+        if num3 ==0:
+            num3 += 1
+            print("악성코드 발견!")
+            print("---------------------------------------------------")
+            if os.path.exists(p_path+'/Desktop/격리소'):
+                shutil.move(txt,p_path + '/Desktop/격리소')
+            else:
+                os.mkdir(p_path + '/Desktop/격리소')
+                shutil.move(txt,p_path + '/Desktop/격리소')
+        print(txt)
+    print("---------------------------------------------------")
+    print("총",num2,"개의 파일을 격리하였습니다.")
+    print("바탕화면의 격리소 폴더를 확인하세요.")
+    if num2==0:
+        print ("악성코드가 없음\n\n\n\n")        
+    
+         
+# def delete():                   #삭제 함수
+#     shutil.rmtree(delete_f)   #삭제코드
+#     print("삭제가 완료되었습니다.")
+#     main()
+
+def upDB():
+    print("추가할 악성코드 이름을 입력")
+    f1 = open("DB.txt", 'a')
+    marDB = input()
+    f1.write(marDB + "\n")
+    f1.close()  # 열려진 파일 객체를 닫는다.
+    print("악성코드",marDB,"가 추가되었습니다.")
+    main()
+   
+
+
+main()
